@@ -47,9 +47,10 @@ const repos = [
   <section class="wrap hero">
     <h1>Bedrock</h1>
     <p class="lede">
-      A 64-bit instruction set architecture and systems-software specification — variable-length encoding,
-      restartable repeated execution, and an optional scalable-vector extension.
+      A 64-bit instruction set architecture and systems-software specification. It has variable-length
+      encoding, restartable repeated instructions, and an optional scalable-vector extension.
     </p>
+    <p class="motto"><a href="/why/">Encode intent. Decompose execution. <span>Why Bedrock →</span></a></p>
     <div class="cta">
       <a class="primary" href="/spec/isa/">Read the reference</a>
       <a href="https://github.com/bedrock-proj/spec">Specification source</a>
@@ -62,12 +63,12 @@ const repos = [
     <h2 class="block-title"><i>01</i>Encoding</h2>
     <table class="lengths">
       <thead>
-        <tr><th>Length</th><th>Encodings</th><th>Example</th></tr>
+        <tr><th>Opcode space</th><th>Encodings</th><th>Example</th></tr>
       </thead>
       <tbody>
         {lengths.map((l) => (
           <tr>
-            <td class="len">{l.bits}<small>bit</small></td>
+            <td class="len">{l.cls.bytes}<small>B</small><span>{l.cls.name}</span></td>
             <td class="bar">
               <span style={`width: ${(l.count / maxCount) * 80}%`}></span>
               <em>{l.count}</em>
@@ -82,7 +83,8 @@ const repos = [
     </table>
     <p class="note">
       {encodings.length} encodings across {instructionCount(encodings)} instructions, read from the <a href="https://github.com/bedrock-proj/spec">specification sources</a> at build time.
-      Digits are fixed opcode bits; letters are operand fields.
+      The first one or two bytes give the instruction's length; displacements, immediates, and other payloads follow the opcode space, up to 18 bytes in total.
+      In the examples, digits are fixed opcode bits and letters are operand fields.
     </p>
   </section>
 
@@ -110,7 +112,7 @@ const repos = [
       ))}
     </ol>
     <p class="note">
-      Designs are graded H1–H10 on the Mohs scale by overall design intensity. <strong>Bedrock Calcite</strong> (H3, scalar in-order) is the current design; H7–H10 are reserved until real designs give them meaning.
+      Designs are graded H1 to H10 on the Mohs scale by overall design intensity. <strong>Bedrock Calcite</strong> (H3, scalar in-order) is the current design; H7 to H10 are named but undefined until there are real designs to place there.
     </p>
   </section>
 
@@ -124,7 +126,7 @@ const repos = [
         </li>
       ))}
     </ol>
-    <p class="note">Contracts close in dependency order, without a published schedule.</p>
+    <p class="note">Contracts are closed in dependency order. There is no published schedule.</p>
   </section>
 
   <section class="wrap block">
@@ -152,6 +154,20 @@ const repos = [
     max-width: 640px;
     margin-top: 20px;
     font-size: 18px;
+  }
+  .motto {
+    margin-top: 18px;
+    font: 500 14px var(--mono);
+  }
+  .motto a {
+    text-decoration: none;
+  }
+  .motto span {
+    color: var(--accent);
+    margin-left: 8px;
+  }
+  .motto a:hover span {
+    text-decoration: underline;
   }
   .cta {
     display: flex;
@@ -197,13 +213,18 @@ const repos = [
     vertical-align: middle;
   }
   .len {
-    width: 70px;
+    width: 110px;
     font: 600 18px var(--mono);
   }
   .len small {
     font: 400 11px var(--mono);
     color: var(--mute);
     margin-left: 2px;
+  }
+  .len span {
+    display: block;
+    font: 400 11px var(--mono);
+    color: var(--mute);
   }
   .bar {
     width: 22%;
@@ -361,7 +382,7 @@ const repos = [
     }
     .lengths tr {
       display: grid;
-      grid-template-columns: 70px 1fr;
+      grid-template-columns: 110px 1fr;
       border-top: 1px solid var(--faint);
       padding: 8px 0;
     }

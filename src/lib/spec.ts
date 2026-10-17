@@ -47,6 +47,17 @@ export function loadEncodings(): Encoding[] {
   return encodings;
 }
 
+// Opcode-space classes, keyed by the number of instruction-specific bits a pattern carries.
+// See isa/encoding/documents/instruction/topics/instruction_word_formats.
+const CLASSES: Record<number, { name: string; bytes: number }> = {
+  7: { name: 'extrashort', bytes: 1 },
+  14: { name: 'short', bytes: 2 },
+  18: { name: 'medium', bytes: 3 },
+  26: { name: 'long', bytes: 4 },
+  34: { name: 'extralong', bytes: 5 },
+  42: { name: 'xxlong', bytes: 6 },
+};
+
 export function lengthSummary(encodings: Encoding[]) {
   const byLength = new Map<number, Encoding[]>();
   for (const enc of encodings) {
@@ -58,6 +69,7 @@ export function lengthSummary(encodings: Encoding[]) {
     .sort(([a], [b]) => a - b)
     .map(([bits, list]) => ({
       bits,
+      cls: CLASSES[bits] ?? { name: `${bits}-bit`, bytes: Math.ceil(bits / 8) },
       count: list.length,
       example: list.find((e) => e.mnemonic === PREFERRED[bits]) ?? list[0],
     }));
