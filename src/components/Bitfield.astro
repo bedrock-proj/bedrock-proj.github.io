@@ -1,0 +1,42 @@
+---
+// Renders an encoding pattern: digits are fixed opcode bits, letters are operand fields.
+interface Props {
+  pattern: string;
+}
+
+const { pattern } = Astro.props;
+
+const segments: { len: number; ch: string }[] = [];
+for (const ch of pattern) {
+  const last = segments[segments.length - 1];
+  if (last && /[a-z]/i.test(ch) && last.ch === ch) last.len++;
+  else segments.push({ len: 1, ch });
+}
+---
+
+<span class="bits" style={`--n: ${pattern.length}`}>
+  {segments.map((s) =>
+    /[01]/.test(s.ch) ? <span class="fixed">{s.ch}</span> : <span class="field" style={`--len: ${s.len}`}>{s.ch}</span>
+  )}
+</span>
+
+<style>
+  .bits {
+    display: inline-flex;
+    font: 500 10px/18px var(--mono);
+    text-align: center;
+  }
+  .bits > span {
+    width: calc(var(--len, 1) * var(--cell, 12px));
+    border: 1px solid var(--faint);
+    margin-right: -1px;
+  }
+  .fixed {
+    color: var(--mute);
+  }
+  .field {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent) !important;
+  }
+</style>

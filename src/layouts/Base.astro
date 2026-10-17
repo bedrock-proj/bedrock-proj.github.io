@@ -1,0 +1,81 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Bedrock',
+  description = 'Bedrock is a 64-bit instruction set architecture and systems-software specification.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <a href="/">Bedrock</a>
+        <nav>
+          <a href="/spec/">Reference</a>
+          <a href="https://github.com/bedrock-proj">GitHub ↗</a>
+        </nav>
+      </div>
+    </div>
+    <main>
+      <slot />
+    </main>
+    <footer class="wrap">
+      <div>
+        <span>Specification: Apache-2.0</span>
+        <span>Grew out of <a href="https://github.com/foliOS-project">foliOS</a> · by <a href="https://kms1212.github.io/">kms1212</a></span>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 32px;
+    border-top: 3px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 6px 0;
+    font: 500 12px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .top a {
+    text-decoration: none;
+  }
+  nav {
+    display: flex;
+    gap: 20px;
+  }
+  footer div {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 96px;
+    padding-top: 12px;
+    padding-bottom: 40px;
+    border-top: 1px solid var(--rule);
+    font: 400 12px var(--mono);
+    color: var(--mute);
+  }
+</style>

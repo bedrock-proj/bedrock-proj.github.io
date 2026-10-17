@@ -1,0 +1,403 @@
+---
+import Base from '../layouts/Base.astro';
+import Bitfield from '../components/Bitfield.astro';
+import { loadEncodings, lengthSummary, instructionCount } from '../lib/spec';
+
+const encodings = loadEncodings();
+const lengths = lengthSummary(encodings);
+const maxCount = Math.max(...lengths.map((l) => l.count));
+
+const docs = [
+  { href: '/spec/isa/', title: "Programmer's Reference Manual", scope: 'State, encoding, execution semantics, memory, privilege, events, debug, extensions' },
+  { href: '/spec/elf-abi/', title: 'ELF ABI', scope: 'Object files, relocations, linking, loading, dynamic linking, TLS, code models, DWARF' },
+  { href: '/spec/c-abi/', title: 'C ABI', scope: 'LP64 data model, calling convention, stack and registers, runtime helpers, memory order' },
+  { href: '/spec/target-intrinsics/', title: 'C target interface', scope: 'Builtins, target headers, lowering requirements, compiler-visible effects' },
+];
+
+const grades = [
+  { grade: 'H1', mineral: 'Talc', status: 'defined', cls: 'Serial' },
+  { grade: 'H2', mineral: 'Gypsum', status: 'defined', cls: 'Serial / Multicycle' },
+  { grade: 'H3', mineral: 'Calcite', status: 'current', cls: 'Scalar In-order' },
+  { grade: 'H4', mineral: 'Fluorite', status: 'defined', cls: 'Superscalar In-order' },
+  { grade: 'H5', mineral: 'Apatite', status: 'defined', cls: 'Restricted Dynamic' },
+  { grade: 'H6', mineral: 'Orthoclase', status: 'defined', cls: 'OoO Superscalar' },
+  { grade: 'H7', mineral: 'Quartz', status: 'reserved', cls: '' },
+  { grade: 'H8', mineral: 'Topaz', status: 'reserved', cls: '' },
+  { grade: 'H9', mineral: 'Corundum', status: 'reserved', cls: '' },
+  { grade: 'H10', mineral: 'Diamond', status: 'reserved', cls: '' },
+];
+
+const roadmap = [
+  { stage: 'Foundation', items: ['Architecture', 'ABI', 'Sail model', 'LLVM toolchain', 'Emulator'], current: true },
+  { stage: 'Platform foundation', items: ['Subsystem interface', 'Discovery', 'Architectural timer'] },
+  { stage: 'Platform profiles', items: ['Interrupts', 'IOMMU', 'Power & clock', 'Reset', 'PCIe'] },
+  { stage: 'General-purpose platform', items: ['Minimum platform profile'] },
+  { stage: 'Standard bindings', items: ['UEFI', 'ACPI'] },
+  { stage: '1.0', items: ['Stable contract'] },
+];
+
+const repos = [
+  { name: 'spec', href: 'https://github.com/bedrock-proj/spec', scope: 'ISA, ABI, compiler interface, Sail model, generated artifacts, emulator, samples' },
+  { name: 'llvm-project', href: 'https://github.com/bedrock-proj/llvm-project', scope: 'Bedrock targets for LLVM, Clang, LLD, and related tools' },
+  { name: 'microarch-*', href: null, scope: 'One microarchitecture each: RTL, verification, design-local docs' },
+];
+---
+
+<Base>
+  <section class="wrap hero">
+    <h1>Bedrock</h1>
+    <p class="lede">
+      A 64-bit instruction set architecture and systems-software specification — variable-length encoding,
+      restartable repeated execution, and an optional scalable-vector extension.
+    </p>
+    <div class="cta">
+      <a class="primary" href="/spec/isa/">Read the reference</a>
+      <a href="https://github.com/bedrock-proj/spec">Specification source</a>
+      <a href="https://github.com/bedrock-proj/llvm-project">LLVM toolchain</a>
+    </div>
+    <p class="warn">Under active design. Encodings, ABIs, and tool interfaces may change.</p>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>01</i>Encoding</h2>
+    <table class="lengths">
+      <thead>
+        <tr><th>Length</th><th>Encodings</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        {lengths.map((l) => (
+          <tr>
+            <td class="len">{l.bits}<small>bit</small></td>
+            <td class="bar">
+              <span style={`width: ${(l.count / maxCount) * 80}%`}></span>
+              <em>{l.count}</em>
+            </td>
+            <td class="ex">
+              <Bitfield pattern={l.example.pattern} />
+              <code>{l.example.syntax}</code>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p class="note">
+      {encodings.length} encodings across {instructionCount(encodings)} instructions, read from the <a href="https://github.com/bedrock-proj/spec">specification sources</a> at build time.
+      Digits are fixed opcode bits; letters are operand fields.
+    </p>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>02</i>Specification</h2>
+    <div class="docs">
+      {docs.map((d) => (
+        <a href={d.href}>
+          <strong>{d.title}</strong>
+          <span>{d.scope}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>03</i>Microarchitectures</h2>
+    <ol class="mohs">
+      {grades.map((g, i) => (
+        <li class={g.status} style={`--h: ${28 + i * 9}px`}>
+          <span class="col"></span>
+          <b>{g.grade}</b>
+          <span class="min">{g.mineral}</span>
+        </li>
+      ))}
+    </ol>
+    <p class="note">
+      Designs are graded H1–H10 on the Mohs scale by overall design intensity. <strong>Bedrock Calcite</strong> (H3, scalar in-order) is the current design; H7–H10 are reserved until real designs give them meaning.
+    </p>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>04</i>Roadmap</h2>
+    <ol class="road">
+      {roadmap.map((r) => (
+        <li class:list={{ current: r.current }}>
+          <b>{r.stage}</b>
+          <ul>{r.items.map((item) => <li>{item}</li>)}</ul>
+        </li>
+      ))}
+    </ol>
+    <p class="note">Contracts close in dependency order, without a published schedule.</p>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>05</i>Repositories</h2>
+    <table class="repos">
+      {repos.map((r) => (
+        <tr>
+          <td>{r.href ? <a href={r.href}>{r.name}</a> : r.name}</td>
+          <td>{r.scope}</td>
+        </tr>
+      ))}
+    </table>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    margin-top: 56px;
+  }
+  h1 {
+    font: 600 clamp(44px, 9vw, 72px) / 1 var(--sans);
+    letter-spacing: -0.03em;
+  }
+  .lede {
+    max-width: 640px;
+    margin-top: 20px;
+    font-size: 18px;
+  }
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 28px;
+  }
+  .cta a {
+    font: 500 13px var(--mono);
+    padding: 8px 14px;
+    border: 1px solid var(--rule);
+    text-decoration: none;
+  }
+  .cta a.primary {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .warn {
+    margin-top: 18px;
+    font: 400 12px var(--mono);
+    color: var(--mute);
+  }
+  .warn::before {
+    content: '△ ';
+    color: var(--accent);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    text-align: left;
+    font: 500 11px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--mute);
+    padding-bottom: 8px;
+  }
+  td {
+    padding: 10px 0;
+    border-top: 1px solid var(--faint);
+    vertical-align: middle;
+  }
+  .len {
+    width: 70px;
+    font: 600 18px var(--mono);
+  }
+  .len small {
+    font: 400 11px var(--mono);
+    color: var(--mute);
+    margin-left: 2px;
+  }
+  .bar {
+    width: 22%;
+    padding-right: 20px;
+  }
+  .bar {
+    white-space: nowrap;
+  }
+  .bar span {
+    display: inline-block;
+    height: 10px;
+    background: var(--accent);
+    vertical-align: middle;
+  }
+  .bar em {
+    font: 400 12px var(--mono);
+    font-style: normal;
+    color: var(--mute);
+    margin-left: 8px;
+  }
+  .ex {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    --cell: 11px;
+  }
+  .ex code {
+    font: 400 12px var(--mono);
+    color: var(--mute);
+  }
+
+  .docs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--faint);
+  }
+  .docs a {
+    display: block;
+    padding: 16px 16px 16px 0;
+    border-bottom: 1px solid var(--faint);
+    text-decoration: none;
+  }
+  .docs a:hover strong {
+    color: var(--accent);
+  }
+  .docs strong {
+    display: block;
+    font-weight: 600;
+  }
+  .docs strong::after {
+    content: ' →';
+    color: var(--mute);
+  }
+  .docs span {
+    font-size: 13px;
+    color: var(--mute);
+  }
+
+  .mohs {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 6px;
+    align-items: end;
+  }
+  .mohs li {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .mohs .col {
+    height: var(--h);
+    border: 1px solid var(--rule);
+    margin-bottom: 6px;
+  }
+  .mohs .current .col {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .mohs .reserved .col {
+    border-style: dashed;
+    border-color: var(--mute);
+  }
+  .mohs .reserved {
+    color: var(--mute);
+  }
+  .mohs b {
+    font: 600 12px var(--mono);
+  }
+  .mohs .current b {
+    color: var(--accent);
+  }
+  .mohs .min {
+    font-size: 12px;
+    color: var(--mute);
+    overflow-wrap: anywhere;
+  }
+
+  .road {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    counter-reset: stage;
+  }
+  .road > li {
+    position: relative;
+    padding: 14px 12px 0 0;
+    border-top: 2px solid var(--faint);
+  }
+  .road > li::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--mute);
+  }
+  .road > li.current {
+    border-top-color: var(--accent);
+  }
+  .road > li.current::before {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .road b {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .road ul {
+    list-style: none;
+    padding: 0;
+    font: 400 11px/1.7 var(--mono);
+    color: var(--mute);
+  }
+
+  .repos td:first-child {
+    width: 160px;
+    font: 500 13px var(--mono);
+  }
+  .repos td:last-child {
+    color: var(--mute);
+  }
+
+  @media (max-width: 760px) {
+    thead {
+      display: none;
+    }
+    .lengths tr {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      border-top: 1px solid var(--faint);
+      padding: 8px 0;
+    }
+    .lengths td {
+      border: 0;
+      padding: 2px 0;
+    }
+    .bar {
+      width: auto;
+    }
+    .ex {
+      grid-column: 1 / -1;
+      overflow-x: auto;
+      --cell: 7px;
+    }
+    .docs {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .mohs .min {
+      display: none;
+    }
+    .road {
+      grid-template-columns: minmax(0, 1fr);
+      border-left: 2px solid var(--faint);
+      margin-left: 5px;
+    }
+    .road > li {
+      border-top: 0;
+      padding: 0 0 18px 18px;
+    }
+    .road > li::before {
+      top: 4px;
+      left: -8px;
+    }
+    .repos td:first-child {
+      width: 120px;
+    }
+  }
+</style>
