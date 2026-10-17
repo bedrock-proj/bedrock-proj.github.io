@@ -1,0 +1,202 @@
+---
+import Base from '../layouts/Base.astro';
+
+const steps = [
+  'load a byte from [R0]',
+  'load a byte from [R1]',
+  'compare them',
+  'advance R0 and R1, decrement R2',
+  'stop if they differ or R2 is zero',
+];
+
+const rules = [
+  { name: 'Length', text: 'Instructions are 1 to 18 bytes long. The first one or two bytes give the length, so the decoder knows where the next instruction starts before it looks at any operand.' },
+  { name: 'Commit', text: 'An instruction becomes visible all at once, however many internal steps it takes. A repeated instruction does this once per iteration.' },
+  { name: 'Interrupted work', text: 'Repeated instructions and vector gather/scatter can stop partway. Their progress is in their own operands, such as the counter and pointers in the memcmp example, so running the same instruction again finishes the rest.' },
+  { name: 'Implementations', text: 'A small core can run the internal steps one at a time. A wide core can run independent steps in parallel. Both implement the same instruction.' },
+];
+
+const history = [
+  { when: 'May 2026', text: 'First commit. Compound instructions were already split into internal steps, but the rest looked like a cleaned-up CISC: separate data and address registers, modifier prefixes, and hidden state for resuming repeated instructions.' },
+  { when: 'July 2026', text: 'The encoding was redone so every instruction states its own length. The register file became R0 to R15, and interrupts and exceptions moved to one event model.' },
+  { when: 'August 2026', text: 'The decoder started being generated from the specification, including a SystemVerilog version. The hidden resume state was removed; an interrupted repeat now restarts by decoding its prefix again.' },
+];
+---
+
+<Base title="Why Bedrock" description="Bedrock's design philosophy: encode intent, decompose execution.">
+  <section class="wrap hero">
+    <p class="kicker">Why Bedrock</p>
+    <h1>Encode intent.<br />Decompose execution.</h1>
+    <p class="lede">
+      A Bedrock instruction can carry a whole loop. The processor splits it into internal steps using a fixed
+      template for that instruction, instead of rebuilding the loop from many small instructions.
+    </p>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>01</i>memcmp in one instruction</h2>
+    <div class="example">
+      <div>
+        <p class="c">memcmp(a, b, n)</p>
+        <pre><code>REPEQ R2, CMP.B [R0++], [R1++]</code></pre>
+      </div>
+      <ol>{steps.map((step) => <li>{step}</li>)}</ol>
+    </div>
+    <p class="body">
+      This is all of <code>memcmp</code>: one instruction, with R0 and R1 pointing at the two buffers and R2 holding the
+      length. The pointers advance through the <code>[R0++]</code> addressing form, so there is no separate increment,
+      compare, or branch. Each iteration commits on its own, and if an interrupt arrives partway through, R0, R1 and R2
+      already hold the progress. Returning to the same instruction continues from there.
+    </p>
+    <p class="body">
+      The project calls this style DISC, for decomposition-oriented instruction set computer. The core receives the
+      whole loop as one instruction and splits each iteration into the listed steps from a fixed template.
+    </p>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>02</i>Rules that follow from it</h2>
+    <dl class="rules">
+      {rules.map((r) => (
+        <div>
+          <dt>{r.name}</dt>
+          <dd>{r.text}</dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+
+  <section class="wrap block">
+    <h2 class="block-title"><i>03</i>History</h2>
+    <ol class="timeline">
+      {history.map((h) => (
+        <li>
+          <span class="date">{h.when}</span>
+          <p>{h.text}</p>
+        </li>
+      ))}
+    </ol>
+    <p class="body">
+      The rules in the previous section describe the design as it stood after these changes. The longer rationale is
+      in <a href="https://github.com/bedrock-proj/spec/issues/4">spec#4</a>.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    margin-top: 56px;
+  }
+  .kicker {
+    font: 500 12px var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+  }
+  h1 {
+    margin-top: 12px;
+    font: 600 clamp(36px, 7vw, 60px) / 1.05 var(--sans);
+    letter-spacing: -0.03em;
+  }
+  .lede {
+    max-width: 660px;
+    margin-top: 24px;
+    font-size: 18px;
+  }
+
+
+
+  .example {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: center;
+    padding: 24px;
+    border: 1px solid var(--rule);
+  }
+  .example .c {
+    font: 400 13px var(--mono);
+    color: var(--mute);
+    margin-bottom: 8px;
+  }
+  .example pre {
+    font: 500 19px var(--mono);
+    white-space: pre-wrap;
+  }
+  .example ol {
+    font: 400 13px/1.9 var(--mono);
+    color: var(--mute);
+    padding-left: 20px;
+  }
+  .body {
+    max-width: 680px;
+    margin-top: 16px;
+  }
+  .rules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 32px;
+  }
+  .rules div {
+    padding: 14px 0;
+    border-top: 1px solid var(--faint);
+  }
+  .rules dt {
+    font: 600 13px var(--mono);
+  }
+  .rules dd {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--mute);
+  }
+  .timeline {
+    list-style: none;
+    padding: 0;
+    border-left: 2px solid var(--faint);
+    margin-left: 6px;
+  }
+  .timeline li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 16px;
+    padding: 0 0 22px 22px;
+  }
+  .timeline li::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+  }
+  .date {
+    font: 400 12px/22px var(--mono);
+    color: var(--mute);
+  }
+  .timeline p {
+    font-size: 15px;
+  }
+
+
+
+  @media (max-width: 760px) {
+    .example {
+      grid-template-columns: minmax(0, 1fr);
+      padding: 16px;
+    }
+    .example pre {
+      font-size: 15px;
+    }
+    .rules {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .timeline li {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+  }
+</style>
