@@ -1,23 +1,37 @@
 ---
-// Renders an encoding pattern: digits are fixed opcode bits, letters are operand fields.
+// Renders an instruction's opcode space, high bit first, including the framing bits
+// from the instruction header. Digits are fixed bits; letters are operand fields; L is the
+// extended-length field. A thicker rule marks each byte boundary.
 interface Props {
   pattern: string;
 }
 
 const { pattern } = Astro.props;
 
-const segments: { len: number; ch: string }[] = [];
-for (const ch of pattern) {
+// Header framing by pattern size (see instruction_word_formats in the spec).
+const framing = pattern.length === 7 ? '0' : pattern.length === 14 ? '10' : '11LLLL';
+const bits = framing + pattern;
+
+type Kind = 'frame' | 'len' | 'fixed' | 'field';
+const kindOf = (i: number, ch: string): Kind =>
+  i < framing.length ? (ch === 'L' ? 'len' : 'frame') : /[01]/.test(ch) ? 'fixed' : 'field';
+
+// Group runs of the same field letter, but never across a byte boundary.
+const segments: { start: number; len: number; ch: string; kind: Kind }[] = [];
+for (let i = 0; i < bits.length; i++) {
+  const ch = bits[i];
+  const kind = kindOf(i, ch);
   const last = segments[segments.length - 1];
-  if (last && /[a-z]/i.test(ch) && last.ch === ch) last.len++;
-  else segments.push({ len: 1, ch });
+  const groupable = kind === 'field' || kind === 'len';
+  if (last && groupable && last.kind === kind && last.ch === ch && i % 8 !== 0) last.len++;
+  else segments.push({ start: i, len: 1, ch, kind });
 }
 ---
 
-<span class="bits" style={`--n: ${pattern.length}`}>
-  {segments.map((s) =>
-    /[01]/.test(s.ch) ? <span class="fixed">{s.ch}</span> : <span class="field" style={`--len: ${s.len}`}>{s.ch}</span>
-  )}
+<span class="bits">
+  {segments.map((s) => (
+    <span class:list={[s.kind, { byte: s.start % 8 === 0 && s.start > 0 }]} style={`--len: ${s.len}`}>{s.ch}</span>
+  ))}
 </span>
 
 <style>
@@ -31,12 +45,22 @@ for (const ch of pattern) {
     border: 1px solid var(--faint);
     margin-right: -1px;
   }
+  .bits > .byte {
+    border-left: 1px solid var(--mute);
+  }
   .fixed {
     color: var(--mute);
+  }
+  .frame {
+    color: var(--fg);
+    font-weight: 700;
+  }
+  .len {
+    background: var(--faint);
+    color: var(--fg);
   }
   .field {
     background: var(--accent-soft);
     color: var(--accent);
-    border-color: color-mix(in srgb, var(--accent) 35%, transparent) !important;
   }
 </style>

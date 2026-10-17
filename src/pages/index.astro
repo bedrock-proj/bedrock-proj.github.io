@@ -84,7 +84,7 @@ const repos = [
     <p class="note">
       {encodings.length} encodings across {instructionCount(encodings)} instructions, read from the <a href="https://github.com/bedrock-proj/spec">specification sources</a> at build time.
       The first one or two bytes give the instruction's length; displacements, immediates, and other payloads follow the opcode space, up to 18 bytes in total.
-      In the examples, digits are fixed opcode bits and letters are operand fields.
+      In the examples, the bold leading bits are the header framing, L is the length field of extended instructions, digits are fixed opcode bits, letters are operand fields, and thick rules mark byte boundaries.
     </p>
   </section>
 
